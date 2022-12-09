@@ -1,3 +1,5 @@
+use std::{env, num};
+
 use thiserror::Error;
 
 const FALLBACK_POSTGRES_URL: &str = "postgres://postgres:postgres@localhost/mindtrails";
@@ -13,17 +15,17 @@ pub struct Config
 
 impl Config
 {
-    pub fn init() -> Result<Self>
+    pub fn init() -> Result<Self, self::Error>
     {
-        let postgres_url = match ::std::env::var("POSTGRES_URL") {
+        let postgres_url = match env::var("POSTGRES_URL") {
             Ok(url) => url,
-            Err(::std::env::VarError::NotPresent) => String::from(FALLBACK_POSTGRES_URL),
+            Err(env::VarError::NotPresent) => String::from(FALLBACK_POSTGRES_URL),
             Err(err) => Err(err)?,
         };
 
         let port = match ::std::env::var("PORT") {
             Ok(port) => port.parse()?,
-            Err(::std::env::VarError::NotPresent) => FALLBACK_PORT,
+            Err(env::VarError::NotPresent) => FALLBACK_PORT,
             Err(err) => Err(err)?,
         };
 
@@ -40,10 +42,6 @@ impl Config
         self.port
     }
 }
-
-type Result<T> = ::core::result::Result<T, Error>;
-
-use std::{env, num};
 
 #[derive(Debug, Error)]
 pub enum Error
