@@ -5,7 +5,7 @@ use sqlx::{self, postgres::PgPoolOptions, PgPool};
 
 use thiserror::Error;
 
-use mindtrails_backend::config::{self, Config};
+use mindtrails::config::{self, Config};
 
 #[tokio::main]
 async fn main() -> Result<(), self::Error>
