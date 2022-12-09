@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 
 use axum::{Extension, Router, Server};
 use sqlx::PgPool;
+use tokio::signal;
 
 mod error;
 pub(in crate::http) use error::Error;
@@ -37,7 +38,34 @@ pub async fn serve(
 
     Server::bind(&addr)
         .serve(app(pg_pool, session_store).into_make_service())
+        .with_graceful_shutdown(shutdown_signal())
         .await?;
 
     Ok(())
+}
+
+async fn shutdown_signal()
+{
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    // NOTE: I don't run a Unix machine so I don't actually know if this works
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {}
+    }
 }
