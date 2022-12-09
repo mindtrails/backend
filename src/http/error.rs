@@ -5,7 +5,7 @@ use axum::{response, Json};
 use serde::Serialize;
 use serde_json::json;
 
-use crate::http;
+use crate::{http, password};
 
 #[derive(Debug)]
 pub(in crate::http) struct Error
@@ -60,4 +60,16 @@ impl Code
     code!(JSON_UNKNOWN_ERROR, 199);
 
     code!(USERNAME_TAKEN, 501);
+}
+
+impl From<password::Error> for Error
+{
+    fn from(_password_err: password::Error) -> Self
+    {
+        Error {
+            error_code: Code::INTERNAL_SERVER_ERROR,
+            status_code: http::StatusCode::INTERNAL_SERVER_ERROR,
+            message: String::from(INTERNAL_SERVER_ERROR_MESSAGE),
+        }
+    }
 }

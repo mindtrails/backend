@@ -4,7 +4,10 @@ use sqlx::PgPool;
 use serde::Deserialize;
 use thiserror::Error;
 
-use crate::http::{self, json};
+use crate::{
+    http::{self, json},
+    password,
+};
 
 pub(in crate::http) fn router() -> Router
 {
@@ -25,6 +28,8 @@ async fn create_user(
 ) -> Result<http::StatusCode, http::error::Error>
 {
     let CreateUser { username, password } = req;
+
+    let password = password::hash(password).await?;
 
     let _pg_query_res = sqlx::query!(
         r#"
