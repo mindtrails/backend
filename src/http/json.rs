@@ -1,8 +1,8 @@
 pub(in crate::http) mod extractor
 {
-    use crate::http::error;
+    use crate::http::{self, error};
 
-    use axum::{extract::rejection, http, response};
+    use axum::{extract::rejection, response};
 
     use axum_macros::FromRequest;
     use serde_json::json;
@@ -14,8 +14,8 @@ pub(in crate::http) mod extractor
     #[derive(Debug)]
     pub(in crate::http) struct Error
     {
-        api_code: error::Code,
-        http_code: http::StatusCode,
+        error_code: error::Code,
+        status_code: http::StatusCode,
         message: String,
     }
 
@@ -23,7 +23,7 @@ pub(in crate::http) mod extractor
     {
         fn from(rejection: rejection::JsonRejection) -> Self
         {
-            let (api_code, http_code) = match rejection {
+            let (error_code, status_code) = match rejection {
                 rejection::JsonRejection::JsonSyntaxError(_) => (
                     error::Code::JSON_SYNTAX_ERROR,
                     http::StatusCode::BAD_REQUEST,
@@ -45,8 +45,8 @@ pub(in crate::http) mod extractor
             let message = rejection.to_string();
 
             Error {
-                api_code,
-                http_code,
+                error_code,
+                status_code,
                 message,
             }
         }
@@ -58,10 +58,10 @@ pub(in crate::http) mod extractor
         {
             let payload = json!({
                 "message": self.message,
-                "code": self.api_code
+                "code": self.error_code
             });
 
-            (self.http_code, axum::Json(payload)).into_response()
+            (self.status_code, axum::Json(payload)).into_response()
         }
     }
 }
