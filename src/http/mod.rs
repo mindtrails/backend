@@ -5,6 +5,8 @@ use sqlx::PgPool;
 
 use thiserror::Error;
 
+mod json;
+
 fn root() -> Router
 {
     Router::new().route(

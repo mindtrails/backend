@@ -88,6 +88,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-macros"
+version = "0.3.0"
+source = "git+https://github.com/tokio-rs/axum#1ff5ab5ba2b7b24cd818e1f1aabbef32c9f22370"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "base64"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -561,6 +572,7 @@ name = "mindtrails"
 version = "0.0.0"
 dependencies = [
  "axum",
+ "axum-macros",
  "hyper",
  "serde",
  "serde_json",
