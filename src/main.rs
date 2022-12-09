@@ -17,6 +17,7 @@ async fn main() -> Result<(), self::Error>
         .acquire_timeout(Duration::from_secs(3))
         .connect(config.postgres_url())
         .await?;
+    sqlx::migrate!().run(&pg_pool).await?;
 
     let addr = SocketAddr::from(([127, 0, 0, 1], config.port()));
 
@@ -45,6 +46,8 @@ enum Error
     Config(#[from] config::Error),
     #[error("{0}")]
     Sqlx(#[from] sqlx::Error),
+    #[error("{0}")]
+    Migrate(#[from] sqlx::migrate::MigrateError),
     #[error("{0}")]
     Hyper(#[from] hyper::Error),
 }

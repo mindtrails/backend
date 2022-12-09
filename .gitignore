@@ -1,1 +1,4 @@
 /target
+
+# .env file needed for sqlx
+.env
