@@ -5,7 +5,10 @@ use axum::{response, Json};
 use serde::Serialize;
 use serde_json::json;
 
-use crate::{http, password};
+use crate::{
+    http::{self, session},
+    password,
+};
 
 #[derive(Debug)]
 pub(in crate::http) struct Error
@@ -44,6 +47,8 @@ pub(super) const INTERNAL_SERVER_ERROR_MESSAGE: &str = "Internal Server Error";
 //     100 - JSON Syntax Error
 //     110 - JSON Data Error
 //     120 - JSON Missing Content Type
+// 2xx - Session
+//     201 - No Session Found
 // 4xx - Auth
 //     401 - User Not Found
 //     402 - Wrong Password
@@ -57,6 +62,8 @@ impl Code
     code!(JSON_SYNTAX_ERROR, 100);
     code!(JSON_DATA_ERROR, 110);
     code!(JSON_MISSING_CONTENT_TYPE, 120);
+
+    code!(NO_SESSION_FOUND, 201);
 
     code!(USER_NOT_FOUND, 401);
     code!(WRONG_PASSWORD, 402);
@@ -74,6 +81,42 @@ impl From<sqlx::Error> for Error
             error_code: Code::INTERNAL_SERVER_ERROR,
             status_code: http::StatusCode::INTERNAL_SERVER_ERROR,
             message: String::from(INTERNAL_SERVER_ERROR_MESSAGE),
+        }
+    }
+}
+
+impl From<session::Error> for Error
+{
+    fn from(session_err: session::Error) -> Self
+    {
+        let error_code = match session_err {
+            session::Error::Base64Decode { .. }
+            | session::Error::SerdeJson { .. }
+            | session::Error::Redis { .. }
+            | session::Error::MissingStoreExtension => Code::INTERNAL_SERVER_ERROR,
+            session::Error::NoSessionFound { .. } => Code::NO_SESSION_FOUND,
+        };
+
+        let status_code = match session_err {
+            session::Error::Base64Decode { .. }
+            | session::Error::SerdeJson { .. }
+            | session::Error::Redis { .. }
+            | session::Error::MissingStoreExtension => http::StatusCode::INTERNAL_SERVER_ERROR,
+            session::Error::NoSessionFound { .. } => http::StatusCode::BAD_REQUEST,
+        };
+
+        let message = match session_err {
+            session::Error::Base64Decode { .. }
+            | session::Error::SerdeJson { .. }
+            | session::Error::Redis { .. }
+            | session::Error::MissingStoreExtension => String::from(INTERNAL_SERVER_ERROR_MESSAGE),
+            session::Error::NoSessionFound { .. } => session_err.to_string(),
+        };
+
+        Error {
+            error_code,
+            status_code,
+            message,
         }
     }
 }

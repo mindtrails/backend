@@ -5,7 +5,10 @@ use serde::Deserialize;
 use thiserror::Error;
 
 use crate::{
-    http::{self, json},
+    http::{
+        self, json,
+        session::{self, Session},
+    },
     password,
 };
 
@@ -23,8 +26,9 @@ struct CreateAuthSession
 
 async fn create_auth_session(
     pg_pool: Extension<PgPool>,
+    session_store: Extension<session::Store>,
     json::extractor::Json(req): json::extractor::Json<CreateAuthSession>,
-) -> Result<http::StatusCode, http::Error>
+) -> Result<(http::HeaderMap, http::StatusCode), http::Error>
 {
     let CreateAuthSession { username, password } = req;
 
@@ -40,7 +44,29 @@ async fn create_auth_session(
             let password_is_correct = password::verify(password, user.password).await?;
 
             if password_is_correct {
-                Ok(http::StatusCode::NO_CONTENT)
+                let mut session = Session::new();
+                session.insert("user_id", user.user_id).await?;
+                // SAFETY: This cannot fail as store_session propagates `None`
+                // upon a `None` field for the session's cookie value, which
+                // will never be empty as we create the session above and never
+                // mutate its cookie value
+                let cookie = session_store.store_session(session).await?.unwrap();
+
+                let mut headers = http::HeaderMap::new();
+                let header_value = http::HeaderValue::from_str(&format!(
+                    "{}={}",
+                    session::SESSION_COOKIE_NAME,
+                    cookie
+                ))
+                // SAFETY: It is known in advance that `SESSION_COOKIE_NAME` as
+                // well as the cookie propagated from the init of the session
+                // are both always going to be ASCII-only, therefore the
+                // formatted string will be ASCII-only, so creating the
+                // HeaderValue will never fail
+                .unwrap();
+                let _prev_value = headers.insert(http::header::SET_COOKIE, header_value);
+
+                Ok((headers, http::StatusCode::NO_CONTENT))
             } else {
                 Err(Error::WrongPassword)?
             }

@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use mindtrails::{
     config::{self, Config},
-    http,
+    http::{self, session},
 };
 
 #[tokio::main]
@@ -21,7 +21,10 @@ async fn main() -> Result<(), self::Error>
         .await?;
     sqlx::migrate!().run(&pg_pool).await?;
 
-    http::serve(config.port(), pg_pool).await?;
+    let redis_client = redis::Client::open("redis://127.0.0.1/")?;
+    let session_store = session::Store::new(redis_client);
+
+    http::serve(config.port(), pg_pool, session_store).await?;
 
     Ok(())
 }
@@ -46,6 +49,12 @@ enum Error
     {
         #[from]
         inner: sqlx::migrate::MigrateError,
+    },
+    #[error("{inner}")]
+    Redis
+    {
+        #[from]
+        inner: redis::RedisError,
     },
     #[error("{inner}")]
     Hyper
