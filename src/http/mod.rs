@@ -33,6 +33,10 @@ pub async fn serve(port: u16, pg_pool: PgPool) -> Result<(), self::Error>
 #[derive(Debug, Error)]
 pub enum Error
 {
-    #[error("{0}")]
-    Hyper(#[from] hyper::Error),
+    #[error("{inner}")]
+    Hyper
+    {
+        #[from]
+        inner: hyper::Error,
+    },
 }

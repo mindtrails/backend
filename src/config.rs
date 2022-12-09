@@ -46,8 +46,16 @@ impl Config
 #[derive(Debug, Error)]
 pub enum Error
 {
-    #[error("{0}")]
-    EnvVar(#[from] env::VarError),
-    #[error("{0}")]
-    ParseInt(#[from] num::ParseIntError),
+    #[error("{inner}")]
+    EnvVar
+    {
+        #[from]
+        inner: env::VarError,
+    },
+    #[error("{inner}")]
+    ParseInt
+    {
+        #[from]
+        inner: num::ParseIntError,
+    },
 }

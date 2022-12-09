@@ -29,12 +29,28 @@ async fn main() -> Result<(), self::Error>
 #[derive(Debug, Error)]
 enum Error
 {
-    #[error("{0}")]
-    Config(#[from] config::Error),
-    #[error("{0}")]
-    Sqlx(#[from] sqlx::Error),
-    #[error("{0}")]
-    Migrate(#[from] sqlx::migrate::MigrateError),
-    #[error("{0}")]
-    Http(#[from] http::Error),
+    #[error("{inner}")]
+    Config
+    {
+        #[from]
+        inner: config::Error,
+    },
+    #[error("{inner}")]
+    Sqlx
+    {
+        #[from]
+        inner: sqlx::Error,
+    },
+    #[error("{inner}")]
+    Migrate
+    {
+        #[from]
+        inner: sqlx::migrate::MigrateError,
+    },
+    #[error("{inner}")]
+    Http
+    {
+        #[from]
+        inner: http::Error,
+    },
 }
