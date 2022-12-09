@@ -67,6 +67,18 @@ impl Code
     code!(INTERNAL_SERVER_ERROR, 999);
 }
 
+impl From<sqlx::Error> for Error
+{
+    fn from(_sqlx_err: sqlx::Error) -> Self
+    {
+        Error {
+            error_code: Code::INTERNAL_SERVER_ERROR,
+            status_code: http::StatusCode::INTERNAL_SERVER_ERROR,
+            message: String::from(INTERNAL_SERVER_ERROR_MESSAGE),
+        }
+    }
+}
+
 impl From<password::Error> for Error
 {
     fn from(_password_err: password::Error) -> Self

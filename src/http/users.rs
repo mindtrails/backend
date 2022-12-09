@@ -30,7 +30,7 @@ async fn create_user(
 
     let password = password::hash(password).await?;
 
-    let _pg_query_res = sqlx::query!(
+    let pg_query_res = sqlx::query!(
         r#"
             INSERT INTO "users"(username, password)
             values ($1, $2)
@@ -39,28 +39,22 @@ async fn create_user(
         password
     )
     .execute(&*pg_pool)
-    .await
-    .map_err(|err| match err {
-        sqlx::Error::Database(database_err)
+    .await;
+
+    match pg_query_res {
+        Ok(_) => Ok(http::StatusCode::NO_CONTENT),
+        Err(sqlx::Error::Database(database_err))
             if database_err.constraint() == Some("users_username_key") =>
         {
-            Error::UsernameTaken
+            Err(Error::UsernameTaken)?
         }
-        err => Error::from(err),
-    })?;
-
-    Ok(http::StatusCode::NO_CONTENT)
+        Err(err) => Err(err)?,
+    }
 }
 
 #[derive(Debug, Error)]
 enum Error
 {
-    #[error("{inner}")]
-    Sqlx
-    {
-        #[from]
-        inner: sqlx::Error,
-    },
     #[error("username already taken")]
     UsernameTaken,
 }
@@ -70,19 +64,14 @@ impl From<Error> for http::Error
     fn from(err: Error) -> Self
     {
         let error_code = match err {
-            Error::Sqlx { .. } => http::error::Code::INTERNAL_SERVER_ERROR,
             Error::UsernameTaken => http::error::Code::USERNAME_TAKEN,
         };
 
         let status_code = match err {
-            Error::Sqlx { .. } => http::StatusCode::INTERNAL_SERVER_ERROR,
             Error::UsernameTaken => http::StatusCode::CONFLICT,
         };
 
-        let message = match err {
-            Error::Sqlx { .. } => String::from(http::error::INTERNAL_SERVER_ERROR_MESSAGE),
-            err => err.to_string(),
-        };
+        let message = err.to_string();
 
         http::Error {
             error_code,

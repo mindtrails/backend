@@ -33,8 +33,7 @@ async fn create_auth_session(
         username
     )
     .fetch_optional(&*pg_pool)
-    .await
-    .map_err(Error::from)?;
+    .await?;
 
     match user {
         Some(user) => {
@@ -46,24 +45,15 @@ async fn create_auth_session(
                 Err(Error::WrongPassword)?
             }
         }
-        None => Err(Error::UserNotFound { username })?,
+        None => Err(Error::UserNotFound)?,
     }
 }
 
 #[derive(Debug, Error)]
 enum Error
 {
-    #[error("{inner}")]
-    Sqlx
-    {
-        #[from]
-        inner: sqlx::Error,
-    },
-    #[error("no user with username {username} was found")]
-    UserNotFound
-    {
-        username: String
-    },
+    #[error("no user with the provided was found")]
+    UserNotFound,
     #[error("the provided password is wrong")]
     WrongPassword,
 }
@@ -73,21 +63,16 @@ impl From<Error> for http::Error
     fn from(err: Error) -> Self
     {
         let error_code = match err {
-            Error::Sqlx { .. } => http::error::Code::INTERNAL_SERVER_ERROR,
-            Error::UserNotFound { .. } => http::error::Code::USER_NOT_FOUND,
+            Error::UserNotFound => http::error::Code::USER_NOT_FOUND,
             Error::WrongPassword => http::error::Code::WRONG_PASSWORD,
         };
 
         let status_code = match err {
-            Error::Sqlx { .. } => http::StatusCode::INTERNAL_SERVER_ERROR,
-            Error::UserNotFound { .. } => http::StatusCode::NOT_FOUND,
+            Error::UserNotFound => http::StatusCode::NOT_FOUND,
             Error::WrongPassword => http::StatusCode::UNPROCESSABLE_ENTITY,
         };
 
-        let message = match err {
-            Error::Sqlx { .. } => String::from(http::error::INTERNAL_SERVER_ERROR_MESSAGE),
-            err => err.to_string(),
-        };
+        let message = err.to_string();
 
         http::Error {
             error_code,
