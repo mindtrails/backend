@@ -15,7 +15,6 @@ pub(in crate::http) fn router() -> Router
 }
 
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
 struct CreateUser
 {
     username: String,
@@ -25,7 +24,7 @@ struct CreateUser
 async fn create_user(
     pg_pool: Extension<PgPool>,
     json::extractor::Json(req): json::extractor::Json<CreateUser>,
-) -> Result<http::StatusCode, http::error::Error>
+) -> Result<http::StatusCode, http::Error>
 {
     let CreateUser { username, password } = req;
 
@@ -66,7 +65,7 @@ enum Error
     UsernameTaken,
 }
 
-impl From<Error> for http::error::Error
+impl From<Error> for http::Error
 {
     fn from(err: Error) -> Self
     {
@@ -85,7 +84,7 @@ impl From<Error> for http::error::Error
             err => err.to_string(),
         };
 
-        http::error::Error {
+        http::Error {
             error_code,
             status_code,
             message,

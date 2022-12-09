@@ -2,7 +2,7 @@ use tokio::task;
 
 use argon2::{
     password_hash::{self, SaltString},
-    Argon2, PasswordHasher,
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
 };
 use thiserror::Error;
 
@@ -18,6 +18,20 @@ pub(crate) async fn hash(password: String) -> Result<String, self::Error>
     .await?;
 
     password
+}
+
+pub(crate) async fn verify(password: String, hash: String) -> Result<bool, self::Error>
+{
+    task::spawn_blocking(move || {
+        let hash = PasswordHash::new(&hash).map_err(Error::from)?;
+
+        match Argon2::default().verify_password(password.as_bytes(), &hash) {
+            Ok(()) => Ok(true),
+            Err(password_hash::Error::Password) => Ok(false),
+            Err(err) => Err(err)?,
+        }
+    })
+    .await?
 }
 
 #[derive(Debug, Error)]

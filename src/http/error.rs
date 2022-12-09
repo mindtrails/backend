@@ -40,26 +40,31 @@ macro_rules! code {
 
 pub(super) const INTERNAL_SERVER_ERROR_MESSAGE: &str = "Internal Server Error";
 
-// 000 - Internal Server Error
 // 1xx - JSON
 //     100 - JSON Syntax Error
 //     110 - JSON Data Error
 //     120 - JSON Missing Content Type
 //     199 - JSON Unknown Error
+// 4xx - Auth
+//     401 - User Not Found
+//     402 - Wrong Password
 // 5xx - Users
 //     501 - Username Taken
+// 999 - Internal Server Error
 impl Code
 {
     #![allow(unsafe_code)]
 
-    code!(INTERNAL_SERVER_ERROR, 000);
-
     code!(JSON_SYNTAX_ERROR, 100);
     code!(JSON_DATA_ERROR, 110);
     code!(JSON_MISSING_CONTENT_TYPE, 120);
-    code!(JSON_UNKNOWN_ERROR, 199);
+
+    code!(USER_NOT_FOUND, 401);
+    code!(WRONG_PASSWORD, 402);
 
     code!(USERNAME_TAKEN, 501);
+
+    code!(INTERNAL_SERVER_ERROR, 999);
 }
 
 impl From<password::Error> for Error

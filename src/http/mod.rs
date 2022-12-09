@@ -8,6 +8,7 @@ pub(in crate::http) use error::Error;
 
 mod json;
 
+mod auth;
 mod users;
 
 pub type StatusCode = ::axum::http::StatusCode;
@@ -15,6 +16,7 @@ pub type StatusCode = ::axum::http::StatusCode;
 fn app(pg_pool: PgPool) -> Router
 {
     Router::new()
+        .merge(auth::router())
         .merge(users::router())
         .layer(Extension(pg_pool))
 }

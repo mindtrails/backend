@@ -20,7 +20,7 @@ pub(in crate::http) mod extractor
                 rejection::JsonRejection::MissingJsonContentType(_) => {
                     error::Code::JSON_MISSING_CONTENT_TYPE
                 }
-                _ => error::Code::JSON_UNKNOWN_ERROR,
+                _ => error::Code::INTERNAL_SERVER_ERROR,
             };
 
             let status_code = match rejection {
