@@ -34,6 +34,7 @@ pub(crate) async fn verify(password: String, hash: String) -> Result<bool, self:
     .await?
 }
 
+#[allow(variant_size_differences)]
 #[derive(Debug, Error)]
 pub(crate) enum Error
 {

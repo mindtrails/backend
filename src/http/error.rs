@@ -44,7 +44,6 @@ pub(super) const INTERNAL_SERVER_ERROR_MESSAGE: &str = "Internal Server Error";
 //     100 - JSON Syntax Error
 //     110 - JSON Data Error
 //     120 - JSON Missing Content Type
-//     199 - JSON Unknown Error
 // 4xx - Auth
 //     401 - User Not Found
 //     402 - Wrong Password
