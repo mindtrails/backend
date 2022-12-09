@@ -3,9 +3,9 @@ use std::net::SocketAddr;
 use axum::{Extension, Router, Server};
 use sqlx::PgPool;
 
-use thiserror::Error;
-
 mod error;
+pub(in crate::http) use error::Error;
+
 mod json;
 
 mod users;
@@ -19,7 +19,7 @@ fn app(pg_pool: PgPool) -> Router
         .layer(Extension(pg_pool))
 }
 
-pub async fn serve(port: u16, pg_pool: PgPool) -> Result<(), self::Error>
+pub async fn serve(port: u16, pg_pool: PgPool) -> Result<(), hyper::Error>
 {
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
 
@@ -28,15 +28,4 @@ pub async fn serve(port: u16, pg_pool: PgPool) -> Result<(), self::Error>
         .await?;
 
     Ok(())
-}
-
-#[derive(Debug, Error)]
-pub enum Error
-{
-    #[error("{inner}")]
-    Hyper
-    {
-        #[from]
-        inner: hyper::Error,
-    },
 }

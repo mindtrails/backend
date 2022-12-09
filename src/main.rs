@@ -48,9 +48,9 @@ enum Error
         inner: sqlx::migrate::MigrateError,
     },
     #[error("{inner}")]
-    Http
+    Hyper
     {
         #[from]
-        inner: http::Error,
+        inner: hyper::Error,
     },
 }
