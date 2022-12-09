@@ -52,6 +52,7 @@ pub(super) const INTERNAL_SERVER_ERROR_MESSAGE: &str = "Internal Server Error";
 // 4xx - Auth
 //     401 - User Not Found
 //     402 - Wrong Password
+//     403 - Must Be Authenticated
 // 5xx - Users
 //     501 - Username Taken
 // 999 - Internal Server Error
@@ -67,6 +68,7 @@ impl Code
 
     code!(USER_NOT_FOUND, 401);
     code!(WRONG_PASSWORD, 402);
+    code!(MUST_BE_AUTHENTICATED, 403);
 
     code!(USERNAME_TAKEN, 501);
 

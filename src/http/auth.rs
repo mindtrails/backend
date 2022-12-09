@@ -1,4 +1,4 @@
-use axum::{routing::post, Extension, Router};
+use axum::{routing::get, Extension, Router};
 use sqlx::PgPool;
 
 use serde::Deserialize;
@@ -14,7 +14,15 @@ use crate::{
 
 pub(in crate::http) fn router() -> Router
 {
-    Router::new().route("/auth", post(create_auth_session))
+    Router::new().route("/auth", get(fetch_auth_session).post(create_auth_session))
+}
+
+async fn fetch_auth_session(user_id: session::extractor::UserId) -> Result<String, http::Error>
+{
+    match user_id {
+        session::extractor::UserId::Found(user_id) => Ok(user_id.to_string()),
+        session::extractor::UserId::NotFound => Err(Error::MustBeAuthenticated)?,
+    }
 }
 
 #[derive(Deserialize)]
@@ -82,6 +90,8 @@ enum Error
     UserNotFound,
     #[error("the provided password is wrong")]
     WrongPassword,
+    #[error("must be authenticated")]
+    MustBeAuthenticated,
 }
 
 impl From<Error> for http::Error
@@ -91,11 +101,13 @@ impl From<Error> for http::Error
         let error_code = match err {
             Error::UserNotFound => http::error::Code::USER_NOT_FOUND,
             Error::WrongPassword => http::error::Code::WRONG_PASSWORD,
+            Error::MustBeAuthenticated => http::error::Code::MUST_BE_AUTHENTICATED,
         };
 
         let status_code = match err {
             Error::UserNotFound => http::StatusCode::NOT_FOUND,
             Error::WrongPassword => http::StatusCode::UNPROCESSABLE_ENTITY,
+            Error::MustBeAuthenticated => http::StatusCode::UNAUTHORIZED,
         };
 
         let message = err.to_string();
