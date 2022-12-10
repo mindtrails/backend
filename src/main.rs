@@ -21,7 +21,7 @@ async fn main() -> Result<(), self::Error>
         .await?;
     sqlx::migrate!().run(&pg_pool).await?;
 
-    let redis_client = redis::Client::open("redis://127.0.0.1/")?;
+    let redis_client = redis::Client::open(config.redis_url())?;
     let session_store = session::Store::new(redis_client);
 
     http::serve(config.port(), pg_pool, session_store).await?;

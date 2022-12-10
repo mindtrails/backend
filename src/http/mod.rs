@@ -34,7 +34,7 @@ pub async fn serve(
     session_store: session::Store,
 ) -> Result<(), hyper::Error>
 {
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let addr = SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 0], port));
 
     Server::bind(&addr)
         .serve(app(pg_pool, session_store).into_make_service())
