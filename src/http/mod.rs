@@ -29,12 +29,17 @@ fn app(pg_pool: PgPool, session_store: session::Store) -> Router
 }
 
 pub async fn serve(
+    in_production: bool,
     port: u16,
     pg_pool: PgPool,
     session_store: session::Store,
 ) -> Result<(), hyper::Error>
 {
-    let addr = SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 0], port));
+    let addr = if in_production {
+        SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 0], port))
+    } else {
+        SocketAddr::from(([127, 0, 0, 1], port))
+    };
 
     Server::bind(&addr)
         .serve(app(pg_pool, session_store).into_make_service())

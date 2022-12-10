@@ -24,7 +24,13 @@ async fn main() -> Result<(), self::Error>
     let redis_client = redis::Client::open(config.redis_url())?;
     let session_store = session::Store::new(redis_client);
 
-    http::serve(config.port(), pg_pool, session_store).await?;
+    http::serve(
+        config.in_production(),
+        config.port(),
+        pg_pool,
+        session_store,
+    )
+    .await?;
 
     Ok(())
 }

@@ -1,4 +1,4 @@
-use std::{env, num};
+use std::{env, num, str};
 
 use thiserror::Error;
 
@@ -7,6 +7,8 @@ const FALLBACK_REDIS_URL: &str = "redis://127.0.0.1/";
 
 const FALLBACK_PORT: u16 = 8080;
 
+const FALLBACK_IN_PRODUCTION: bool = false;
+
 #[derive(Debug)]
 pub struct Config
 {
@@ -14,6 +16,7 @@ pub struct Config
     redis_url: String,
 
     port: u16,
+    in_production: bool,
 }
 
 impl Config
@@ -37,10 +40,18 @@ impl Config
             Err(err) => Err(err)?,
         };
 
+        let in_production = match ::std::env::var("PRODUCTION") {
+            Ok(production) => production.parse()?,
+            Err(env::VarError::NotPresent) => FALLBACK_IN_PRODUCTION,
+            Err(err) => Err(err)?,
+        };
+
         Ok(Config {
             postgres_url,
             redis_url,
+
             port,
+            in_production,
         })
     }
 
@@ -58,6 +69,11 @@ impl Config
     {
         self.port
     }
+
+    pub fn in_production(&self) -> bool
+    {
+        self.in_production
+    }
 }
 
 #[derive(Debug, Error)]
@@ -74,5 +90,11 @@ pub enum Error
     {
         #[from]
         inner: num::ParseIntError,
+    },
+    #[error("{inner}")]
+    ParseBool
+    {
+        #[from]
+        inner: str::ParseBoolError,
     },
 }
