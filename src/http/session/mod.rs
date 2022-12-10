@@ -53,6 +53,7 @@ impl Session
             id,
             expires_in: None,
             data: Arc::new(RwLock::new(HashMap::new())),
+
             cookie_value: Some(cookie),
             data_changed: Arc::new(AtomicBool::new(false)),
         }
@@ -96,11 +97,11 @@ impl Session
         let mut data = self.data.write().unwrap();
         if data.get(key) != Some(&value) {
             let _previous_value = data.insert(String::from(key), value);
-            self.data_changed.store(true, Ordering::Relaxed)
+            self.data_changed.store(true, Ordering::Relaxed);
         }
     }
 
-    fn into_cookie_value(mut self) -> Option<String>
+    pub(in crate::http) fn into_cookie_value(mut self) -> Option<String>
     {
         self.cookie_value.take()
     }
@@ -144,9 +145,6 @@ pub(in crate::http) enum Error
     },
     #[error("missing request session store extension")]
     MissingStoreExtension,
-    #[error("no session found for cookie {cookie}")]
-    NoSessionFound
-    {
-        cookie: String
-    },
+    #[error("no session found")]
+    NoSessionFound,
 }

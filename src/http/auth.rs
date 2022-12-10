@@ -14,7 +14,12 @@ use crate::{
 
 pub(in crate::http) fn router() -> Router
 {
-    Router::new().route("/auth", get(fetch_auth_session).post(create_auth_session))
+    Router::new().route(
+        "/auth",
+        get(fetch_auth_session)
+            .post(create_auth_session)
+            .delete(delete_auth_session),
+    )
 }
 
 async fn fetch_auth_session(user_id: session::extractor::UserId) -> Result<String, http::Error>
@@ -80,6 +85,33 @@ async fn create_auth_session(
             }
         }
         None => Err(Error::UserNotFound)?,
+    }
+}
+
+async fn delete_auth_session(
+    session_store: Extension<session::Store>,
+    session: session::extractor::Session,
+) -> Result<(http::HeaderMap, http::StatusCode), http::Error>
+{
+    match session {
+        session::extractor::Session::Found(session) => {
+            let cookie = session.clone().into_cookie_value();
+
+            session_store.destroy_session(session).await?;
+
+            let mut headers = http::HeaderMap::new();
+            let header_value = http::HeaderValue::from_str(&format!(
+                "{}={:?}; SameSite=None; Secure; Max-Age=0;",
+                session::SESSION_COOKIE_NAME,
+                cookie
+            ))
+            // SAAFETY: See relevant safety note for create_auth_session
+            .unwrap();
+            let _prev_value = headers.insert(http::header::SET_COOKIE, header_value);
+
+            Ok((headers, http::StatusCode::NO_CONTENT))
+        }
+        session::extractor::Session::NotFound => Err(Error::MustBeAuthenticated)?,
     }
 }
 

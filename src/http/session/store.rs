@@ -34,12 +34,7 @@ impl Store
         let record = connection
             .get::<_, Option<String>>(id)
             .await
-            .map(|record| {
-                record.ok_or_else(|| {
-                    let cookie = String::from(cookie);
-                    session::Error::NoSessionFound { cookie }
-                })
-            })
+            .map(|record| record.ok_or_else(|| session::Error::NoSessionFound))
             .map_err(session::Error::from)
             .flatten()?;
 
@@ -66,5 +61,17 @@ impl Store
         };
 
         Ok(session.into_cookie_value())
+    }
+
+    pub(in crate::http) async fn destroy_session(
+        &self,
+        session: session::Session,
+    ) -> Result<(), session::Error>
+    {
+        let mut connection = self.connection().await?;
+
+        connection.del(session.id).await?;
+
+        Ok(())
     }
 }
