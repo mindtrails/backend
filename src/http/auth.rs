@@ -62,7 +62,7 @@ async fn create_auth_session(
 
                 let mut headers = http::HeaderMap::new();
                 let header_value = http::HeaderValue::from_str(&format!(
-                    "{}={}",
+                    "{}={}; SameSite=None; Secure",
                     session::SESSION_COOKIE_NAME,
                     cookie
                 ))
