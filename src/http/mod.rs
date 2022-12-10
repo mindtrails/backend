@@ -3,6 +3,7 @@ use std::net::SocketAddr;
 use axum::{Extension, Router, Server};
 use sqlx::PgPool;
 use tokio::signal;
+use tower_http::cors::CorsLayer;
 
 mod error;
 pub(in crate::http) use error::Error;
@@ -19,13 +20,14 @@ use axum::http::header;
 type HeaderMap = ::axum::http::HeaderMap;
 type HeaderValue = ::axum::http::HeaderValue;
 
-fn app(pg_pool: PgPool, session_store: session::Store) -> Router
+fn app(cors: CorsLayer, pg_pool: PgPool, session_store: session::Store) -> Router
 {
     Router::new()
         .merge(auth::router())
         .merge(users::router())
         .layer(Extension(pg_pool))
         .layer(Extension(session_store))
+        .layer(cors)
 }
 
 pub async fn serve(
@@ -41,8 +43,20 @@ pub async fn serve(
         SocketAddr::from(([127, 0, 0, 1], port))
     };
 
+    let cors_origin = if in_production {
+        ::std::env::var("CORS_ORIGIN").unwrap()
+    } else {
+        format!("http://127.0.0.1:3000")
+    }
+    .parse::<HeaderValue>()
+    .unwrap();
+    let cors = CorsLayer::new()
+        .allow_methods([::axum::http::Method::GET, ::axum::http::Method::POST])
+        .allow_credentials(true)
+        .allow_origin(cors_origin);
+
     Server::bind(&addr)
-        .serve(app(pg_pool, session_store).into_make_service())
+        .serve(app(cors, pg_pool, session_store).into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await?;
 
