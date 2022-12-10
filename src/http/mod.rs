@@ -51,7 +51,11 @@ pub async fn serve(
     .parse::<HeaderValue>()
     .unwrap();
     let cors = CorsLayer::new()
-        .allow_methods([::axum::http::Method::GET, ::axum::http::Method::POST])
+        .allow_methods([
+            ::axum::http::Method::GET,
+            ::axum::http::Method::POST,
+            ::axum::http::Method::DELETE,
+        ])
         .allow_credentials(true)
         .allow_origin(cors_origin)
         .allow_headers([::axum::http::header::CONTENT_TYPE]);
