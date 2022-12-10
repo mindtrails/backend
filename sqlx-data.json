@@ -1,0 +1,42 @@
+{
+  "db": "PostgreSQL",
+  "6ae164181434e2a640a5d9869ff8b0606eb2316c732e47d46bea54c522bb93f7": {
+    "describe": {
+      "columns": [
+        {
+          "name": "user_id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "password",
+          "ordinal": 1,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "select user_id, password from users where username = $1"
+  },
+  "8f85569a4e06b019a16cbf44076cb6ff2b2bb6b647b582653e75f5b94da36aeb": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO \"users\"(username, password)\n            values ($1, $2)\n        "
+  }
+}
