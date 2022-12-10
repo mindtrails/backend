@@ -53,7 +53,8 @@ pub async fn serve(
     let cors = CorsLayer::new()
         .allow_methods([::axum::http::Method::GET, ::axum::http::Method::POST])
         .allow_credentials(true)
-        .allow_origin(cors_origin);
+        .allow_origin(cors_origin)
+        .allow_headers([::axum::http::header::CONTENT_TYPE]);
 
     Server::bind(&addr)
         .serve(app(cors, pg_pool, session_store).into_make_service())
